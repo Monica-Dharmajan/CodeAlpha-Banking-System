@@ -1,0 +1,195 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <iomanip>
+
+using namespace std;
+
+// Transaction class to store transaction details
+class Transaction {
+public:
+    string type;
+    double amount;
+
+    Transaction(string t, double a) : type(t), amount(a) {}
+};
+
+// Account class to manage account details and transactions
+class Account {
+private:
+    int accountNumber;
+    double balance;
+    vector<Transaction> transactionHistory;
+
+public:
+    Account(int accNum, double initialBalance = 0.0) 
+        : accountNumber(accNum), balance(initialBalance) {}
+
+    int getAccountNumber() const {
+        return accountNumber;
+    }
+
+    double getBalance() const {
+        return balance;
+    }
+
+    void deposit(double amount) {
+        balance += amount;
+        transactionHistory.emplace_back("Deposit", amount);
+        cout << "Deposited $" << amount << ". New Balance: $" << balance << endl;
+    }
+
+    bool withdraw(double amount) {
+        if (amount > balance) {
+            cout << "Insufficient balance.\n";
+            return false;
+        }
+        balance -= amount;
+        transactionHistory.emplace_back("Withdrawal", amount);
+        cout << "Withdrew $" << amount << ". New Balance: $" << balance << endl;
+        return true;
+    }
+
+    void showTransactionHistory() const {
+        cout << "Transaction History for Account " << accountNumber << ":\n";
+        for (const auto& transaction : transactionHistory) {
+            cout << transaction.type << ": $" << transaction.amount << endl;
+        }
+    }
+};
+
+// Customer class to hold customer information and their associated account
+class Customer {
+private:
+    string name;
+    int customerID;
+    Account account;
+
+public:
+    Customer(string n, int id, int accNum, double initialBalance = 0.0)
+        : name(n), customerID(id), account(accNum, initialBalance) {}
+
+    int getCustomerID() const {
+        return customerID;
+    }
+
+    string getName() const {
+        return name;
+    }
+
+    Account& getAccount() {
+        return account;
+    }
+
+    void showCustomerInfo() const {
+        cout << "Customer ID: " << customerID << "\nName: " << name 
+             << "\nAccount Number: " << account.getAccountNumber() 
+             << "\nBalance: $" << fixed << setprecision(2) << account.getBalance() << endl;
+    }
+};
+
+// BankingService class to manage customers and banking operations
+class BankingService {
+private:
+    vector<Customer> customers;
+    int nextCustomerID = 1;
+    int nextAccountNumber = 1001;
+
+public:
+    void addCustomer(const string& name, double initialBalance = 0.0) {
+        customers.emplace_back(name, nextCustomerID++, nextAccountNumber++, initialBalance);
+        cout << "Customer added successfully with ID: " << nextCustomerID - 1 << endl;
+    }
+
+    Customer* findCustomer(int customerID) {
+        for (auto& customer : customers) {
+            if (customer.getCustomerID() == customerID) {
+                return &customer;
+            }
+        }
+        cout << "Customer not found.\n";
+        return nullptr;
+    }
+
+    void deposit(int customerID, double amount) {
+        Customer* customer = findCustomer(customerID);
+        if (customer) {
+            customer->getAccount().deposit(amount);
+        }
+    }
+
+    void withdraw(int customerID, double amount) {
+        Customer* customer = findCustomer(customerID);
+        if (customer) {
+            customer->getAccount().withdraw(amount);
+        }
+    }
+
+    void showAccountInfo(int customerID) {
+        Customer* customer = findCustomer(customerID);
+        if (customer) {
+            customer->showCustomerInfo();
+        }
+    }
+
+    void showTransactionHistory(int customerID) {
+        Customer* customer = findCustomer(customerID);
+        if (customer) {
+            customer->getAccount().showTransactionHistory();
+        }
+    }
+};
+
+int main() {
+    BankingService bank;
+    int choice, customerID;
+    double amount;
+    string name;
+
+    while (true) {
+        cout << "\nBanking System Menu:\n";
+        cout << "1. Add Customer\n2. Deposit\n3. Withdraw\n4. Show Account Info\n5. Show Transaction History\n6. Exit\n";
+        cout << "Choose an option: ";
+        cin >> choice;
+
+        switch (choice) {
+            case 1:
+                cout << "Enter customer name: ";
+                cin.ignore();
+                getline(cin, name);
+                cout << "Enter initial balance: ";
+                cin >> amount;
+                bank.addCustomer(name, amount);
+                break;
+            case 2:
+                cout << "Enter customer ID for deposit: ";
+                cin >> customerID;
+                cout << "Enter amount to deposit: ";
+                cin >> amount;
+                bank.deposit(customerID, amount);
+                break;
+            case 3:
+                cout << "Enter customer ID for withdrawal: ";
+                cin >> customerID;
+                cout << "Enter amount to withdraw: ";
+                cin >> amount;
+                bank.withdraw(customerID, amount);
+                break;
+            case 4:
+                cout << "Enter customer ID to view account info: ";
+                cin >> customerID;
+                bank.showAccountInfo(customerID);
+                break;
+            case 5:
+                cout << "Enter customer ID to view transaction history: ";
+                cin >> customerID;
+                bank.showTransactionHistory(customerID);
+                break;
+            case 6:
+                cout << "Exiting the Banking System.\n";
+                return 0;
+            default:
+                cout << "Invalid option. Try again.\n";
+        }
+    }
+}
